@@ -1,0 +1,11 @@
+[0m[[0m[0mdebug[0m] [0m[0mPackaging /root/projet_spark_streaming/target/scala-2.12/projet_spark_streaming_2.12-0.1.jar ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mInput file mappings:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	SparkConsumerStream$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /root/projet_spark_streaming/target/scala-2.12/classes/SparkConsumerStream$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	SparkConsumerStream.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /root/projet_spark_streaming/target/scala-2.12/classes/SparkConsumerStream.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	SparkProducerBatch.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /root/projet_spark_streaming/target/scala-2.12/classes/SparkProducerBatch.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	SparkProducerBatch$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /root/projet_spark_streaming/target/scala-2.12/classes/SparkProducerBatch$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0mDone packaging.[0m
