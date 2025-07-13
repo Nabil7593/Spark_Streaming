@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     environment:
@@ -13,17 +14,21 @@ services:
     image: confluentinc/cp-kafka:7.4.0
     depends_on:
       - zookeeper
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
 
   spark-master:
-    image: bitnami/spark:3.5.0
+    image: bitnami/spark:3.4.1
+    container_name: spark-master
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
@@ -33,10 +38,11 @@ services:
     volumes:
       - ./target/scala-2.12:/app
       - ./jars:/app/jars
-      - ./bank.csv:/opt/bitnami/spark/bank.csv  # <-- ajoute ça
+      - ./bank.csv:/opt/bitnami/spark/bank.csv
 
   spark-worker:
-    image: bitnami/spark:3.5.0
+    image: bitnami/spark:3.4.1
+    container_name: spark-worker-1
     depends_on:
       - spark-master
     environment:
@@ -47,8 +53,7 @@ services:
     volumes:
       - ./target/scala-2.12:/app
       - ./jars:/app/jars
-      - ./bank.csv:/opt/bitnami/spark/bank.csv  # <-- ajoute ça
-
+      - ./bank.csv:/opt/bitnami/spark/bank.csv
 
   postgres:
     image: postgres:14
@@ -63,7 +68,19 @@ services:
     volumes:
       - projet_spark_streaming_pgdata:/var/lib/postgresql/data
 
+  streamlit:
+    image: python:3.10
+    container_name: streamlit
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - postgres
+    command: >
+      bash -c "pip install -r requirements.txt && streamlit run app.py --server.port=8501 --server.address=0.0.0.0"
+
 volumes:
   projet_spark_streaming_pgdata:
-
-
+  kafka_data:

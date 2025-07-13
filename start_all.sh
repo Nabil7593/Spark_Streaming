@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e  # Si une commande échoue ➔ tout s'arrête
 
 echo "➡️  1. Compilation du projet Scala (.jar) avec sbt clean package..."
@@ -7,17 +6,28 @@ sbt clean package
 
 echo "✅ Jar compilé avec succès."
 
-echo "➡️  2. Arrêt et relancement de Docker (Kafka + Spark)..."
-docker-compose down
+echo "➡️  2. Arrêt et relancement de Docker (Kafka + Spark + Streamlit)..."
+docker-compose down -v
+docker-compose build
 docker-compose up -d
 
-echo "⏳  Attente pour laisser démarrer Kafka, Spark Master et Worker..."
+echo "⏳  Attente pour laisser démarrer Kafka, Spark, PostgreSQL..."
 sleep 15
 
 echo "✅ Tous les containers sont UP."
 
-echo "➡️  3. Lancement du Spark Producer dans le cluster Spark..."
-docker exec -i $(docker ps --filter "name=spark-master" --format "{{.Names}}") spark-submit \
+echo "➡️  3. Création du topic Kafka 'csv-topic' s'il n'existe pas..."
+docker exec -i projet_spark_streaming-kafka-1 \
+  kafka-topics --create --if-not-exists \
+  --bootstrap-server kafka:9092 \
+  --replication-factor 1 \
+  --partitions 1 \
+  --topic csv-topic
+
+echo "✅ Topic 'csv-topic' prêt."
+
+echo "➡️  4. Lancement du Spark Producer dans le cluster Spark..."
+docker exec -i spark-master spark-submit \
   --class SparkProducerBatch \
   --master spark://spark-master:7077 \
   --deploy-mode client \
@@ -26,10 +36,10 @@ docker exec -i $(docker ps --filter "name=spark-master" --format "{{.Names}}") s
   /app/projet_spark_streaming_2.12-0.1.jar &
 
 echo "⏳  Pause pour laisser le Producer envoyer les premiers batches..."
-sleep 40
+sleep 60
 
-echo "➡️  4. Lancement du Spark Consumer dans le cluster Spark..."
-docker exec -i $(docker ps --filter "name=spark-master" --format "{{.Names}}") spark-submit \
+echo "➡️  5. Lancement du Spark Consumer dans le cluster Spark..."
+docker exec -i spark-master spark-submit \
   --class SparkConsumerStream \
   --master spark://spark-master:7077 \
   --deploy-mode client \
