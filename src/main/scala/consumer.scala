@@ -18,7 +18,7 @@ object SparkConsumerStream {
       .option("header", "true")
       .option("inferSchema", "true")
       .option("delimiter", ",")
-      .csv("bank.csv")            // <-- adapte le chemin si besoin
+      .csv("/opt/bank/bank.csv")            // <-- adapte le chemin si besoin
     val schema = sampleDF.schema
     println("📋 Schéma deviné automatiquement :")
     schema.printTreeString()
@@ -27,7 +27,7 @@ object SparkConsumerStream {
     val kafkaStream = spark.readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", "kafka:9092")
-      .option("subscribe", "csv-topic")
+      .option("subscribe", "csv_topic")
       .option("startingOffsets", "earliest")
       .option("failOnDataLoss", "false")
       .load()
@@ -109,6 +109,7 @@ object SparkConsumerStream {
         println(s"✅ Micro-batch $batchId correctement traité")
       }
       .outputMode("append")  // on accumule les résultats par batch
+      .option("checkpointLocation", "/tmp/checkpoint_consumer")  // ← obligatoire
       .start()
 
     query.awaitTermination()

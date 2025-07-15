@@ -38,7 +38,7 @@ services:
     volumes:
       - ./target/scala-2.12:/app
       - ./jars:/app/jars
-      - ./bank.csv:/opt/bitnami/spark/bank.csv
+      - ./bank.csv:/opt/bank/bank.csv
 
   spark-worker:
     image: bitnami/spark:3.4.1
@@ -53,7 +53,7 @@ services:
     volumes:
       - ./target/scala-2.12:/app
       - ./jars:/app/jars
-      - ./bank.csv:/opt/bitnami/spark/bank.csv
+      - ./bank.csv:/opt/bank/bank.csv
 
   postgres:
     image: postgres:14
