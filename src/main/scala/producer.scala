@@ -1,6 +1,5 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import scala.concurrent.duration._
 import java.util.concurrent.TimeUnit
 
 object SparkProducerBatch {
@@ -12,22 +11,20 @@ object SparkProducerBatch {
 
     import spark.implicits._
 
-    val filePath = "bank.csv"
-    val topic = "csv-topic"
+    val filePath = "/opt/bank/bank.csv"
+    val topic = "csv_topic"
 
-    // Lecture brute du CSV
     val df = spark.read
       .option("header", "true")
       .option("inferSchema", "true")
       .csv(filePath)
-      .cache() // on met en cache car on va le parcourir plusieurs fois
+      .cache()
 
     val totalCount = df.count()
     val batchSize = 1000
     val numBatches = (totalCount / batchSize).toInt + (if (totalCount % batchSize > 0) 1 else 0)
 
-    
-
+    println(s"📦 Total : $totalCount lignes, envoi de $numBatches batchs de $batchSize lignes...")
 
     for (batchId <- 0 until numBatches) {
       val batchDF = df
@@ -35,22 +32,23 @@ object SparkProducerBatch {
         .filter($"row_id" >= batchId * batchSize && $"row_id" < (batchId + 1) * batchSize)
         .drop("row_id")
 
-      val batchToKafka = batchDF.withColumn("value", to_json(struct(batchDF.columns.map(col): _*)))
+      val batchToKafka = batchDF
+        .select(to_json(struct(batchDF.columns.map(col): _*)).as("value"))
         .selectExpr("CAST(NULL AS STRING) as key", "value")
 
+      println(s"🚀 Envoi du batch $batchId ...")
       batchToKafka
         .write
         .format("kafka")
         .option("kafka.bootstrap.servers", "kafka:9092")
         .option("topic", topic)
-        .option("checkpointLocation", s"/tmp/spark_checkpoint_csv_kafka_batch_$batchId")
         .save()
 
-      println(s"Batch $batchId envoyé (${batchSize.min((totalCount - batchId * batchSize).toInt)} lignes). Pause 30 secondes...")
+      println(s"✅ Batch $batchId envoyé. Pause 30s...")
       TimeUnit.SECONDS.sleep(30)
     }
 
-    println("Tous les batches envoyés ✅")
+    println("✅ Tous les batchs ont été envoyés avec succès.")
     spark.stop()
   }
 }
